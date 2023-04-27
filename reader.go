@@ -66,7 +66,6 @@ func (r *Reader) _removeUTF8Leading(heading []string) []string {
 	}
 
 	heading[0] = string(runed[1:])
-	fmt.Println(heading)
 	return heading
 }
 
