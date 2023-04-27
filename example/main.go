@@ -26,7 +26,7 @@ type Person struct {
 	Added     time.Time `csv:"Added"`
 	Modified  time.Time `csv:"Modified"`
 
-	Contacts *ContactInfo `csv:"embedded"`
+	Contacts ContactInfo `csv:"embedded"`
 }
 
 func main() {

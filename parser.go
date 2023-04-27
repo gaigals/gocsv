@@ -144,29 +144,29 @@ func (p *parser) _processStructTags(structValueOfPtr reflect.Value) (parsed, err
 			continue
 		}
 
-		// if field.HasKey(tagEmbedded) && field.Value.CanAddr() {
-		// 	if field.Kind != reflect.Pointer {
-		// 		field.Value = field.Value.Addr()
-		// 	}
-		//
-		// 	if field.Kind == reflect.Pointer {
-		// 		valueOfPtr, err := p._createNewStructPtrValue(field.Value.Type().Elem())
-		// 		if err != nil {
-		// 			return parsed{}, err
-		// 		}
-		//
-		// 		field.Value.Set(valueOfPtr)
-		// 	}
-		//
-		// 	embeddedParsed, err := p._processStructTags(field.Value)
-		// 	if err != nil {
-		// 		return parsed{}, err
-		// 	}
-		//
-		// 	names = append(names, embeddedParsed.names...)
-		// 	fieldValues = append(fieldValues, embeddedParsed.fieldValues...)
-		// 	continue
-		// }
+		if field.HasKey(tagEmbedded) && field.Value.CanAddr() {
+			// if field.Kind != reflect.Pointer {
+			// 	field.Value = field.Value.Addr()
+			// }
+			//
+			// if field.Kind == reflect.Pointer {
+			// 	valueOfPtr, err := p._createNewStructPtrValue(field.Value.Type().Elem())
+			// 	if err != nil {
+			// 		return parsed{}, err
+			// 	}
+			//
+			// 	field.Value.Set(valueOfPtr)
+			// }
+
+			embeddedParsed, err := p._processStructTags(field.Value.Addr())
+			if err != nil {
+				return parsed{}, err
+			}
+
+			names = append(names, embeddedParsed.names...)
+			fieldValues = append(fieldValues, embeddedParsed.fieldValues...)
+			continue
+		}
 
 		names = append(names, field.FirstTag().Key)
 		fieldValues = append(fieldValues, field.Value)
