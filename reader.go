@@ -34,6 +34,11 @@ func NewReader(filePath string, separator rune) (*Reader, error) {
 	return &Reader{file: file, csvReader: csvReader}, nil
 }
 
+func (r *Reader) TrimLeadingSpace(trim bool) *Reader {
+	r.csvReader.TrimLeadingSpace = trim
+	return r
+}
+
 func (r *Reader) Read(target any) error {
 	val, err := parseTarget(target)
 	if err != nil {
