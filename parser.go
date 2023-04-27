@@ -5,13 +5,25 @@ import (
 	"reflect"
 )
 
+const tagEmbedded = "embedded"
+
 type parser struct {
-	valueOfStructPtr reflect.Value
 	valueOfSlice     reflect.Value
+	valueOfStructPtr reflect.Value
 	valueOfStruct    reflect.Value
-	fieldValues      []reflect.Value
-	names            []string
 	columns          []column
+	parsed
+}
+
+type parsed struct {
+	fieldValues []reflect.Value
+	names       []string
+}
+
+type object struct {
+	valueOfSlice  reflect.Value
+	valueOfStruct reflect.Value
+	columns       []column
 }
 
 func parseTarget(target any) (*parser, error) {
@@ -26,14 +38,28 @@ func parseTarget(target any) (*parser, error) {
 		return nil, err
 	}
 
-	return &p, p._processStructTags()
+	p.parsed, err = p._processStructTags(p.valueOfStructPtr)
+	if err != nil {
+		return nil, err
+	}
+
+	return &p, nil
 }
 
-func (p *parser) parseHead(header []string) (reflect.Value, reflect.Value, []column) {
+func (p *parser) parseHead(header []string) *object {
+	cols := p._parseHead(header, p.parsed)
+	return &object{
+		valueOfSlice:  p.valueOfSlice,
+		valueOfStruct: p.valueOfStruct,
+		columns:       cols,
+	}
+}
+
+func (p *parser) _parseHead(header []string, parsed parsed) []column {
 	cols := make([]column, 0)
 
-	for colIdx, colName := range header {
-		for nameIdx, name := range p.names {
+	for nameIdx, name := range parsed.names {
+		for colIdx, colName := range header {
 			if colName != name {
 				continue
 			}
@@ -41,12 +67,28 @@ func (p *parser) parseHead(header []string) (reflect.Value, reflect.Value, []col
 			cols = append(cols, column{
 				index:   colIdx,
 				name:    name,
-				valueOf: p.fieldValues[nameIdx],
+				valueOf: parsed.fieldValues[nameIdx],
 			})
 		}
 	}
 
-	return p.valueOfSlice, p.valueOfStruct, cols
+	return cols
+}
+
+func (p *parser) _parseStruct(colIndex int, colName string, parsed parsed) *column {
+	for nameIdx, name := range parsed.names {
+		if colName != name {
+			continue
+		}
+
+		return &column{
+			index:   colIndex,
+			name:    name,
+			valueOf: p.fieldValues[nameIdx],
+		}
+	}
+
+	return nil
 }
 
 func (p *parser) _processSlice(target any) error {
@@ -67,31 +109,76 @@ func (p *parser) _processSlice(target any) error {
 func (p *parser) _processStruct() error {
 	typeOfStruct := p.valueOfSlice.Type().Elem()
 
-	if typeOfStruct.Kind() != reflect.Struct {
-		return fmt.Errorf("underlying element of slice must be struct")
-	}
-
-	p.valueOfStructPtr = reflect.New(typeOfStruct)
-	p.valueOfStructPtr.Elem().Set(reflect.Zero(typeOfStruct))
-
-	p.valueOfStruct = p.valueOfStructPtr.Elem()
-	return nil
-}
-
-func (p *parser) _processStructTags() error {
-	fields, err := tagSettings.ParseStruct(p.valueOfStructPtr.Interface())
+	valueOfPtr, err := p._createNewStructPtrValue(typeOfStruct)
 	if err != nil {
 		return err
 	}
+
+	p.valueOfStructPtr = valueOfPtr
+	p.valueOfStruct = valueOfPtr.Elem()
+	return nil
+}
+
+func (p *parser) _createNewStructPtrValue(typeOf reflect.Type) (reflect.Value, error) {
+	if typeOf.Kind() != reflect.Struct {
+		return reflect.Value{},
+			fmt.Errorf("underlying element must be struct")
+	}
+
+	valueOfPtr := reflect.New(typeOf)
+	valueOfPtr.Elem().Set(reflect.Zero(typeOf))
+	return valueOfPtr, nil
+}
+
+func (p *parser) _processStructTags(structValueOfPtr reflect.Value) (parsed, error) {
+	fields, err := tagSettings.ParseStruct(structValueOfPtr.Interface())
+	if err != nil {
+		return parsed{}, err
+	}
+
+	names := make([]string, 0)
+	fieldValues := make([]reflect.Value, 0)
 
 	for _, field := range fields {
 		if len(field.Tags) == 0 {
 			continue
 		}
 
-		p.names = append(p.names, field.Tags[0].Key)
-		p.fieldValues = append(p.fieldValues, field.Value)
+		// if field.HasKey(tagEmbedded) && field.Value.CanAddr() {
+		// 	if field.Kind != reflect.Pointer {
+		// 		field.Value = field.Value.Addr()
+		// 	}
+		//
+		// 	if field.Kind == reflect.Pointer {
+		// 		valueOfPtr, err := p._createNewStructPtrValue(field.Value.Type().Elem())
+		// 		if err != nil {
+		// 			return parsed{}, err
+		// 		}
+		//
+		// 		field.Value.Set(valueOfPtr)
+		// 	}
+		//
+		// 	embeddedParsed, err := p._processStructTags(field.Value)
+		// 	if err != nil {
+		// 		return parsed{}, err
+		// 	}
+		//
+		// 	names = append(names, embeddedParsed.names...)
+		// 	fieldValues = append(fieldValues, embeddedParsed.fieldValues...)
+		// 	continue
+		// }
+
+		names = append(names, field.FirstTag().Key)
+		fieldValues = append(fieldValues, field.Value)
 	}
 
-	return nil
+	return parsed{names: names, fieldValues: fieldValues}, nil
+}
+
+func (p *parser) _unpackPtr(valueOf reflect.Value) reflect.Value {
+	if valueOf.Kind() != reflect.Ptr {
+		return valueOf
+	}
+
+	return p._unpackPtr(valueOf.Elem())
 }

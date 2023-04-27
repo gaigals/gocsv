@@ -45,17 +45,17 @@ func (r *Reader) Read(target any) error {
 		return err
 	}
 
-	sliceVal, structVal, cols := val.parseHead(header)
-	if len(cols) == 0 {
+	obj := val.parseHead(header)
+	if len(obj.columns) == 0 {
 		return nil
 	}
 
-	newSliceVal, err := r.readContent(sliceVal, structVal, cols)
+	newSliceVal, err := r.readContent(*obj)
 	if err != nil {
 		return err
 	}
 
-	sliceVal.Set(newSliceVal)
+	obj.valueOfSlice.Set(newSliceVal)
 
 	return nil
 }
@@ -91,7 +91,7 @@ func (r *Reader) readHead() ([]string, error) {
 	return header, nil
 }
 
-func (r *Reader) readContent(sliceVal, structVal reflect.Value, cols []column) (reflect.Value, error) {
+func (r *Reader) readContent(obj object) (reflect.Value, error) {
 	index := 0
 	for {
 		index++
@@ -108,15 +108,15 @@ func (r *Reader) readContent(sliceVal, structVal reflect.Value, cols []column) (
 			return reflect.Value{}, fmt.Errorf("csv Reader error: %w", err)
 		}
 
-		err = r._applyToColumns(row, cols)
+		err = r._applyToColumns(row, obj.columns)
 		if err != nil {
 			return reflect.Value{}, err
 		}
 
-		sliceVal = r._append(sliceVal, structVal)
+		obj.valueOfSlice = r._append(obj.valueOfSlice, obj.valueOfStruct)
 	}
 
-	return sliceVal, nil
+	return obj.valueOfSlice, nil
 }
 
 func (r *Reader) Close() error {

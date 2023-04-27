@@ -8,6 +8,12 @@ import (
 	"github.com/gaigals/gocsv"
 )
 
+type ContactInfo struct {
+	Phone  string `csv:"Phone"`
+	Street string `csv:"Street"`
+	Email  string `csv:"Email"`
+}
+
 type Person struct {
 	ID        uint      `csv:"ID"`
 	FirstName string    `csv:"FirstName"`
@@ -15,13 +21,12 @@ type Person struct {
 	Age       uint      `csv:"Age"`
 	Country   string    `csv:"Country"`
 	Gender    string    `csv:"Gender"`
-	Phone     string    `csv:"Phone"`
-	Street    string    `csv:"Street"`
-	Email     string    `csv:"Email"`
 	Language  string    `csv:"Language"`
 	BirthDate time.Time `csv:"BirthDate"`
 	Added     time.Time `csv:"Added"`
 	Modified  time.Time `csv:"Modified"`
+
+	Contacts *ContactInfo `csv:"embedded"`
 }
 
 func main() {

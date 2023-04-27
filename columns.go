@@ -13,7 +13,3 @@ func (cols columns) maxIndex() int {
 
 	return max
 }
-
-// func (cols columns) addIndexes(header []ind) {
-//
-// }
