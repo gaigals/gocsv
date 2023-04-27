@@ -39,6 +39,11 @@ func (r *Reader) TrimLeadingSpace(trim bool) *Reader {
 	return r
 }
 
+func (r *Reader) LazyQuotes(enable bool) *Reader {
+	r.csvReader.LazyQuotes = enable
+	return r
+}
+
 func (r *Reader) Read(target any) error {
 	val, err := parseTarget(target)
 	if err != nil {
