@@ -54,16 +54,19 @@ func (r *Reader) LazyQuotes(enable bool) *Reader {
 	return r
 }
 
-func (r *Reader) _removeUTFLeading(heading []string) []string {
+func (r *Reader) _removeUTF8Leading(heading []string) []string {
 	if !r.trimUTF8Leading || len(heading) == 0 || len(heading[0]) == 0 {
 		return heading
 	}
 
-	if rune(heading[0][0]) != 239 {
+	runed := []rune(heading[0])
+
+	if runed[0] != 65279 {
 		return heading
 	}
 
-	heading[0] = heading[0][1:]
+	heading[0] = string(runed[1:])
+	fmt.Println(heading)
 	return heading
 }
 
@@ -78,7 +81,7 @@ func (r *Reader) Read(target any) error {
 		return err
 	}
 
-	obj := val.parseHead(r._removeUTFLeading(header))
+	obj := val.parseHead(header)
 	if len(obj.columns) == 0 {
 		return nil
 	}
@@ -109,6 +112,8 @@ func (r *Reader) readHead() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	header = r._removeUTF8Leading(header)
 
 	if r.columnParser == nil || !r.applyToHeaderParser {
 		return header, nil
