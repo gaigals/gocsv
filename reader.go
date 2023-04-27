@@ -16,6 +16,7 @@ type Reader struct {
 	csvReader           *csv.Reader
 	columnParser        ColumnParser
 	applyToHeaderParser bool
+	trimUTF8Leading     bool
 	limit               int
 }
 
@@ -31,7 +32,16 @@ func NewReader(filePath string, separator rune) (*Reader, error) {
 	csvReader.LazyQuotes = true
 	csvReader.TrimLeadingSpace = true
 
-	return &Reader{file: file, csvReader: csvReader}, nil
+	return &Reader{
+		file:            file,
+		csvReader:       csvReader,
+		trimUTF8Leading: true,
+	}, nil
+}
+
+func (r *Reader) TrimUTF8Leading(trim bool) *Reader {
+	r.trimUTF8Leading = trim
+	return r
 }
 
 func (r *Reader) TrimLeadingSpace(trim bool) *Reader {
@@ -42,6 +52,19 @@ func (r *Reader) TrimLeadingSpace(trim bool) *Reader {
 func (r *Reader) LazyQuotes(enable bool) *Reader {
 	r.csvReader.LazyQuotes = enable
 	return r
+}
+
+func (r *Reader) _removeUTFLeading(heading []string) []string {
+	if !r.trimUTF8Leading || len(heading) == 0 || len(heading[0]) == 0 {
+		return heading
+	}
+
+	if rune(heading[0][0]) != 239 {
+		return heading
+	}
+
+	heading[0] = heading[0][1:]
+	return heading
 }
 
 func (r *Reader) Read(target any) error {
@@ -55,7 +78,7 @@ func (r *Reader) Read(target any) error {
 		return err
 	}
 
-	obj := val.parseHead(header)
+	obj := val.parseHead(r._removeUTFLeading(header))
 	if len(obj.columns) == 0 {
 		return nil
 	}
