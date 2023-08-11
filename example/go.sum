@@ -2,8 +2,8 @@ github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de h1:FxWPpzIjnTlhP
 github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de/go.mod h1:DCaWoUhZrYW9p1lxo/cm8EmUOOzAPSEZNGF2DK1dJgw=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/gaigals/gotags v0.1.2-0.20230427073335-440a77db6928 h1:DnKlYIfN/4GzNKm2MP57IviswjkJLMICf8KOtTuCB3s=
-github.com/gaigals/gotags v0.1.2-0.20230427073335-440a77db6928/go.mod h1:6DMq32ssjow/C5fzYUWS4sNlsIqdmy2/dDWuKUdluyo=
+github.com/gaigals/gotags v0.1.2 h1:W7kxRdtOVvX9ZIe4MNCWVF20S4tlS5Tpk2cDIY/mfvU=
+github.com/gaigals/gotags v0.1.2/go.mod h1:6DMq32ssjow/C5fzYUWS4sNlsIqdmy2/dDWuKUdluyo=
 github.com/mattn/go-runewidth v0.0.10/go.mod h1:RAqKPSqVFrSLVXbA8x7dzmKdmGzieGRCM46jaSJTDAk=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
