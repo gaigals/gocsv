@@ -11,6 +11,8 @@ github.com/gaigals/gotags v0.1.2-0.20230427073335-440a77db6928 h1:DnKlYIfN/4GzNK
 github.com/gaigals/gotags v0.1.2-0.20230427073335-440a77db6928/go.mod h1:6DMq32ssjow/C5fzYUWS4sNlsIqdmy2/dDWuKUdluyo=
 github.com/gaigals/gotags v0.1.2 h1:W7kxRdtOVvX9ZIe4MNCWVF20S4tlS5Tpk2cDIY/mfvU=
 github.com/gaigals/gotags v0.1.2/go.mod h1:6DMq32ssjow/C5fzYUWS4sNlsIqdmy2/dDWuKUdluyo=
+github.com/gaigals/gotags v0.1.3 h1:xshN5HnZFs8PorBuSraT1LWRMGr9E7lPiywLKKLmv2Q=
+github.com/gaigals/gotags v0.1.3/go.mod h1:6DMq32ssjow/C5fzYUWS4sNlsIqdmy2/dDWuKUdluyo=
 github.com/mattn/go-runewidth v0.0.10/go.mod h1:RAqKPSqVFrSLVXbA8x7dzmKdmGzieGRCM46jaSJTDAk=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
