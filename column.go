@@ -49,7 +49,7 @@ func (col *column) _castValue(value string) (reflect.Value, error) {
 		if err != nil {
 			return reflect.Value{}, err
 		}
-		return reflect.ValueOf(uint(i)), nil
+		return reflect.ValueOf(i), nil
 	case reflect.Int64:
 		i, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
