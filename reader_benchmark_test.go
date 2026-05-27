@@ -26,10 +26,12 @@ type benchmarkRecord struct {
 	EndedAt   *time.Time `csv:"ended_at"`
 }
 
+// BenchmarkReadFileSmall parses a 100-row, 8-column CSV generated before the timer starts.
 func BenchmarkReadFileSmall(b *testing.B) {
 	benchmarkReadFileRows(b, benchmarkSmallRows)
 }
 
+// BenchmarkReadFileLarge parses a 100,000-row, 8-column CSV generated before the timer starts.
 func BenchmarkReadFileLarge(b *testing.B) {
 	benchmarkReadFileRows(b, benchmarkLargeRows)
 }

@@ -9,8 +9,10 @@ import (
 	"reflect"
 )
 
+// ColumnParser transforms raw CSV values before assignment.
 type ColumnParser func(value string) (string, error)
 
+// Reader reads CSV rows into a target slice of tagged structs.
 type Reader struct {
 	file                *os.File
 	csvReader           *csv.Reader
@@ -20,8 +22,9 @@ type Reader struct {
 	limit               int
 }
 
+// NewReader creates a Reader for the CSV file at filePath using separator as the field delimiter.
 func NewReader(filePath string, separator rune) (*Reader, error) {
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
+	file, err := os.Open(filePath) // #nosec G304 -- NewReader intentionally opens caller-provided CSV files.
 	if err != nil {
 		return nil,
 			fmt.Errorf("failed to open file=%s, error: %v", filePath, err)
@@ -31,6 +34,7 @@ func NewReader(filePath string, separator rune) (*Reader, error) {
 	csvReader.Comma = separator
 	csvReader.LazyQuotes = true
 	csvReader.TrimLeadingSpace = true
+	csvReader.ReuseRecord = true
 
 	return &Reader{
 		file:            file,
@@ -39,16 +43,19 @@ func NewReader(filePath string, separator rune) (*Reader, error) {
 	}, nil
 }
 
+// TrimUTF8Leading configures whether Reader removes a leading UTF-8 BOM from the first header column.
 func (r *Reader) TrimUTF8Leading(trim bool) *Reader {
 	r.trimUTF8Leading = trim
 	return r
 }
 
+// TrimLeadingSpace configures whether Reader trims leading spaces in unquoted CSV fields.
 func (r *Reader) TrimLeadingSpace(trim bool) *Reader {
 	r.csvReader.TrimLeadingSpace = trim
 	return r
 }
 
+// LazyQuotes configures whether Reader allows malformed quoted CSV fields.
 func (r *Reader) LazyQuotes(enable bool) *Reader {
 	r.csvReader.LazyQuotes = enable
 	return r
@@ -69,6 +76,7 @@ func (r *Reader) _removeUTF8Leading(heading []string) []string {
 	return heading
 }
 
+// Read parses CSV rows into target, which must be a pointer to a slice of structs.
 func (r *Reader) Read(target any) error {
 	val, err := parseTarget(target)
 	if err != nil {
@@ -95,12 +103,14 @@ func (r *Reader) Read(target any) error {
 	return nil
 }
 
+// ApplyColumnParser configures a parser that transforms CSV values before assignment.
 func (r *Reader) ApplyColumnParser(parser ColumnParser, applyToHeader bool) *Reader {
 	r.columnParser = parser
 	r.applyToHeaderParser = applyToHeader
 	return r
 }
 
+// Limit configures the row limit used while reading CSV records.
 func (r *Reader) Limit(limit int) *Reader {
 	r.limit = limit
 	return r
@@ -158,6 +168,7 @@ func (r *Reader) readContent(obj object) (reflect.Value, error) {
 	return obj.valueOfSlice, nil
 }
 
+// Close closes the underlying CSV file.
 func (r *Reader) Close() error {
 	if r.file == nil {
 		return nil

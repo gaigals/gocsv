@@ -15,6 +15,7 @@ var (
 		WithNoKeyExistValidation()
 )
 
+// ReadFile reads a CSV file into target, which must be a pointer to a slice of structs.
 func ReadFile(target any, filePath string, separator rune) (err error) {
 	reader, err := NewReader(filePath, separator)
 	if err != nil {

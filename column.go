@@ -10,6 +10,8 @@ import (
 	"github.com/araddon/dateparse"
 )
 
+var typeOfTime = reflect.TypeFor[time.Time]()
+
 type column struct {
 	index   int
 	name    string
@@ -22,151 +24,109 @@ func (col *column) applyValue(value string) error {
 		return nil
 	}
 
-	valueOfCasted, err := col._castValue(value)
-	if err != nil {
-		return err
-	}
-
-	col.valueOf.Set(valueOfCasted)
-	return nil
+	return col._setValue(col.valueOf, value)
 }
 
-func (col *column) _castValue(value string) (reflect.Value, error) {
-	switch col.valueOf.Kind() {
+func (col *column) _setValue(valueOf reflect.Value, value string) error {
+	switch valueOf.Kind() {
 	case reflect.String:
-		return reflect.ValueOf(value), nil
-	case reflect.Ptr:
-		buffCol := column{valueOf: reflect.Zero(col.valueOf.Type().Elem())}
-		valueOf, err := buffCol._castValue(value)
+		valueOf.SetString(value)
+		return nil
+	case reflect.Pointer:
+		valueOfPtr := reflect.New(valueOf.Type().Elem())
+		err := col._setValue(valueOfPtr.Elem(), value)
 		if err != nil {
-			return reflect.Value{}, err
+			return err
 		}
-		return col._convertAsAddr(valueOf), nil
+		valueOf.Set(valueOfPtr)
+		return nil
 	case reflect.Struct:
-		return col._castStruct(value)
-	case reflect.Int:
-		i, err := strconv.Atoi(value)
+		return col._setStruct(valueOf, value)
+	case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
+		i, err := strconv.ParseInt(value, 10, valueOf.Type().Bits())
 		if err != nil {
-			return reflect.Value{}, err
+			return err
 		}
-		return reflect.ValueOf(i), nil
-	case reflect.Int64:
-		i, err := strconv.ParseInt(value, 10, 64)
+		valueOf.SetInt(i)
+		return nil
+	case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8:
+		i, err := strconv.ParseUint(value, 10, valueOf.Type().Bits())
 		if err != nil {
-			return reflect.Value{}, err
+			return err
 		}
-		return reflect.ValueOf(i), nil
-	case reflect.Int32:
-		i, err := strconv.ParseInt(value, 10, 32)
+		valueOf.SetUint(i)
+		return nil
+	case reflect.Float32, reflect.Float64:
+		f, err := strconv.ParseFloat(value, valueOf.Type().Bits())
 		if err != nil {
-			return reflect.Value{}, err
+			return err
 		}
-		return reflect.ValueOf(int32(i)), nil
-	case reflect.Int16:
-		i, err := strconv.ParseInt(value, 10, 16)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		return reflect.ValueOf(int16(i)), nil
-	case reflect.Int8:
-		i, err := strconv.ParseInt(value, 10, 8)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		return reflect.ValueOf(int8(i)), nil
-	case reflect.Uint:
-		i, err := strconv.ParseUint(value, 10, 64)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		return reflect.ValueOf(uint(i)), nil
-	case reflect.Uint64:
-		i, err := strconv.ParseUint(value, 10, 64)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		return reflect.ValueOf(i), nil
-	case reflect.Uint32:
-		i, err := strconv.ParseUint(value, 10, 32)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		return reflect.ValueOf(uint32(i)), nil
-	case reflect.Uint16:
-		i, err := strconv.ParseUint(value, 10, 16)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		return reflect.ValueOf(uint16(i)), nil
-	case reflect.Uint8:
-		i, err := strconv.ParseUint(value, 10, 64)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		return reflect.ValueOf(uint8(i)), nil
-	case reflect.Float32:
-		f, err := strconv.ParseFloat(value, 32)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		return reflect.ValueOf(float32(f)), nil
-	case reflect.Float64:
-		f, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-		return reflect.ValueOf(f), nil
+		valueOf.SetFloat(f)
+		return nil
 	case reflect.Bool:
 		b, err := strconv.ParseBool(value)
 		if err != nil {
-			return reflect.Value{}, err
+			return err
 		}
-		return reflect.ValueOf(b), nil
+		valueOf.SetBool(b)
+		return nil
 	default:
-		return reflect.Value{}, fmt.Errorf("unsupported type=%s for field=%s",
-			col.valueOf.Kind(), col.name)
+		return fmt.Errorf("unsupported type=%s for field=%s",
+			valueOf.Kind(), col.name)
 	}
 }
 
-func (col *column) _castStruct(value string) (reflect.Value, error) {
-	if col.valueOf.Type() == reflect.TypeOf(time.Time{}) {
-		return col._castTimeString(value)
+func (col *column) _setStruct(valueOf reflect.Value, value string) error {
+	if valueOf.Type() == typeOfTime {
+		t, err := col._castTimeString(value)
+		if err != nil {
+			return err
+		}
+
+		valueOf.Set(reflect.ValueOf(t))
+		return nil
 	}
 
-	return reflect.Value{}, fmt.Errorf("unsupported type=%s for field=%s",
-		col.valueOf.Kind(), col.name)
+	return fmt.Errorf("unsupported type=%s for field=%s",
+		valueOf.Kind(), col.name)
 }
 
-func (col *column) _castTimeString(value string) (reflect.Value, error) {
+func (col *column) _castTimeString(value string) (time.Time, error) {
+	t, err := time.Parse(time.DateOnly, value)
+	if err == nil {
+		return t, nil
+	}
+
+	t, err = time.Parse("2006-01-02 15:04:05", value)
+	if err == nil {
+		return t, nil
+	}
+
+	t, err = time.Parse(time.RFC3339, value)
+	if err == nil {
+		return t, nil
+	}
+
+	t, err = time.Parse(time.RFC3339Nano, value)
+	if err == nil {
+		return t, nil
+	}
+
 	parsedTime, err := dateparse.ParseStrict(value)
 	if err == nil {
-		return col._convertAsAddr(reflect.ValueOf(parsedTime)), nil
+		return parsedTime, nil
 	}
 	if !errors.Is(err, dateparse.ErrAmbiguousMMDD) {
-		return reflect.Value{},
+		return time.Time{},
 			fmt.Errorf("failed to parse time string format=%s", value)
 	}
 
 	// Workaround for dataparse time format bug.
 	// This bug probably never will get fixed.
-	t, err := time.Parse("02.01.2006 15:04:05", value)
+	t, err = time.Parse("02.01.2006 15:04:05", value)
 	if err != nil {
-		return reflect.Value{},
+		return time.Time{},
 			fmt.Errorf("failed to parse time string format=%s", value)
 	}
-	return col._convertAsAddr(reflect.ValueOf(t)), nil
-}
-
-func (col *column) _convertAsAddr(value reflect.Value) reflect.Value {
-	if col.valueOf.Kind() != reflect.Pointer {
-		return value
-	}
-
-	if !value.CanAddr() {
-		valuePtr := reflect.New(value.Type())
-		valuePtr.Elem().Set(value)
-		return valuePtr
-	}
-
-	return value.Addr()
+	return t, nil
 }
