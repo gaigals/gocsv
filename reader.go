@@ -145,6 +145,8 @@ func (r *Reader) readContent(obj object) (reflect.Value, error) {
 			return reflect.Value{}, fmt.Errorf("csv Reader error: %w", err)
 		}
 
+		obj.valueOfStruct.Set(reflect.Zero(obj.valueOfStruct.Type()))
+
 		err = r._applyToColumns(row, obj.columns)
 		if err != nil {
 			return reflect.Value{}, err
