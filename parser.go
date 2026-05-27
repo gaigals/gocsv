@@ -174,11 +174,3 @@ func (p *parser) _processStructTags(structValueOfPtr reflect.Value) (parsed, err
 
 	return parsed{names: names, fieldValues: fieldValues}, nil
 }
-
-func (p *parser) _unpackPtr(valueOf reflect.Value) reflect.Value {
-	if valueOf.Kind() != reflect.Ptr {
-		return valueOf
-	}
-
-	return p._unpackPtr(valueOf.Elem())
-}

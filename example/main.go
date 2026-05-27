@@ -8,12 +8,14 @@ import (
 	"github.com/gaigals/gocsv"
 )
 
+// ContactInfo contains CSV contact fields for the example program.
 type ContactInfo struct {
 	Phone  string `csv:"Phone"`
 	Street string `csv:"Street"`
 	Email  string `csv:"Email"`
 }
 
+// Person contains CSV person fields for the example program.
 type Person struct {
 	ID        uint      `csv:"ID"`
 	FirstName string    `csv:"FirstName"`
